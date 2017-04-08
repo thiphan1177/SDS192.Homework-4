@@ -9,22 +9,102 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## R Markdown
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
-
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
-
-```{r cars}
-summary(cars)
+```{r}
+library(mdsr)
+library(RMySQL)
+db <- dbConnect_scidb(dbname = "imdb")
+library(dplyr)
+library(ggplot2)
 ```
 
-## Including Plots
-
-You can also embed plots, for example:
-
-```{r pressure, echo=FALSE}
-plot(pressure)
+```{r}
+class(db)
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+### compute # of films for each production_year
+### store result as data frame with 2 columns: production_year & num_films
+```{r}
+totalfilms <- db%>%
+  dbGetQuery("SELECT production_year, sum(1) as num_films
+              FROM title
+              GROUP BY production_year");
+  
+```
+
+### Number of films for each production_year table
+```{r}
+totalfilms
+```
+
+### Compute # of westerns for each production_year. 
+### Store result as data frame w/2 columns: production year & num_westerns
+```{r}
+westerns <- db%>%
+  dbGetQuery("SELECT production_year, sum(1) as num_westerns
+              FROM movie_info mi
+              JOIN title t ON t.id = mi.movie_id
+              WHERE mi.info_type_id = 3 AND mi.info LIKE '%western%'
+              GROUP BY production_year");
+```
+
+### Number of western films for each production_year table
+```{r}
+westerns
+```
+
+### Join the results from the previous two questions on production_year (using dplyr – not SQL). 
+```{r}
+new_table <- totalfilms %>%
+  inner_join(westerns, by = "production_year")
+```
+
+### newly joined table
+```{r}
+new_table
+```
+
+### Compute the percentage of movies in each year that are Westerns.
+```{r}
+ratio_table <-new_table %>%
+  group_by(production_year) %>%
+  mutate(ratio = (num_westerns/num_films)*100 )
+```
+
+### % of movies that are westerns table
+```{r}
+ratio_table
+```
+
+### confused about time series. made table for production year and ratio of western films for a time series plot 
+```{r}
+time_series <- subset(ratio_table, select=c("production_year", "ratio"))
+```
+
+```{r}
+time_series
+```
+
+### made another table for just ratio western films for a time series plot
+```{r}
+time_ratio <- subset(ratio_table, select=c("ratio"))
+```
+
+```{r}
+time_ratio
+```
+
+### Plot the percentage of films that are Westerns as a time series. Annotate your plot with the year in which Unforgiven was made. Do you find any evidence to suggest that Unforgiven revived the Western?
+
+### time series plot 1 of just the % of films that are western
+```{r}
+plot.ts(time_ratio)
+```
+
+### Unforgiven came out in 1992. On the graph, I did not know how to annotate it, but looking at the time on the x axis and the western films ratio on the y axis, I don't think that Unforgiven revived western films. The time period after the '60s gets really flat and since the film came out in 1992, by that time, the line on the plot is still very flat. 
+
+
+
+
+
+
