@@ -102,9 +102,3 @@ plot.ts(time_ratio)
 ```
 
 ### Unforgiven came out in 1992. On the graph, I did not know how to annotate it, but looking at the time on the x axis and the western films ratio on the y axis, I don't think that Unforgiven revived western films. The time period after the '60s gets really flat and since the film came out in 1992, by that time, the line on the plot is still very flat. 
-
-
-
-
-
-
